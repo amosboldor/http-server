@@ -9,10 +9,11 @@ buffer_length = 1024
 address = ('127.0.0.1', 5000)
 
 responses = {
+    400: ('Bad Request', 'Bad request syntax or unsupported method'),
     404: ('Not Found', 'Nothing matches the given URI'),
-    405: ('Method Not Allowed'),
-    500: ('Internal Server Error'),
-    505: ('HTTP Version Not Supported')
+    405: ('Method Not Allowed', 'Specified method is invalid for this resource.'),
+    500: ('Internal Server Error', 'Server got itself in trouble'),
+    505: ('HTTP Version Not Supported', 'Cannot fulfill request.')
 }
 
 
@@ -39,24 +40,21 @@ def main():
 
 def parse_request(message):
     """Validate that the request is well-formed if it is return the URI from the request."""
-    requestline = message.rstrip('\r\n')
-    print(requestline)
-    request_split = requestline.split()
-    print(request_split)
-    command, path, version, host, host_name = request_split
-    version_number = version.split('/', 1)[1]
+    request_split = message.split()
     try:
-        if command != 'GET':
+        if len(request_split) > 5:
             raise ValueError(405)
-        elif 'HTTP/' not in version:
+        elif request_split[0] != 'GET':
+            raise ValueError(405)
+        elif 'HTTP/' not in request_split[2]:
             raise ValueError(400)
-        elif len(version_number) != 3 or version_number != '1.1':
-                raise ValueError(505)
-        if host != 'Host:' or host_name != address[0]:
+        elif '1.1' not in request_split[2]:
+            raise ValueError(505)
+        if request_split[3] != 'Host:' or request_split[4] != address[0]:
             raise ValueError(400)
     except ValueError:
-        raise
-    return path
+        pass
+    return request_split[1]
 
 
 def build_error(string):
@@ -72,12 +70,13 @@ def build_error(string):
     return html.format(string)
 
 
-# def resolve_uri(uri):
-#     """Take a URI parsed from a request.
+def resolve_uri(uri):
+    """Take a URI parsed from a request.
 
-#     It will return a body for a response with the type of
-#     content contained in the body.
-#     """
+    It will return a body for a response with the type of
+    content contained in the body.
+    """
+    pass
 
 
 def handle_message(conn, buffer_length):
@@ -98,8 +97,8 @@ def handle_message(conn, buffer_length):
 
     full_message = b''.join(message)
     try:
-        parse_request(full_message.decode('utf8'))
-        print('Request OK')
+        uri = parse_request(full_message.decode('utf8'))
+        file_type, body = resolve_uri(uri.decode("utf8"))
         return response_ok().encode('utf8')
     except ValueError as e:
         return response_error(*e.args).encode('utf8')
