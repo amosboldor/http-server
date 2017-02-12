@@ -3,6 +3,8 @@
 
 import socket
 import datetime
+import os
+from mimetypes import MimeTypes
 
 
 buffer_length = 1024
@@ -17,11 +19,14 @@ responses = {
 }
 
 
-def response_ok():
+def response_ok(body, content_type):
     """Return a well formed HTTP 200 OK response."""
-    response = 'HTTP/1.1 200 OK\r\n'
-    response += 'Content-Type: text/plain\r\n'
-    response += 'Date: ' + datetime.datetime.now().strftime('%a %b %Y %X PST') + '\r\n'
+    response = b'HTTP/1.1 200 OK\r\n'
+    response += b'Date: ' + str(datetime.datetime.now().strftime('%a %b %Y %X PST')).encode() + b'\r\n'
+    response += b'Connection: close\r\n'
+    response += b'Content-Type: ' + content_type + b'\r\n'
+    response += b'Content-Length: ' + str(len(body)).encode() + b'\r\n\r\n'
+    response += body + b'\r\n'
     return response
 
 
@@ -70,13 +75,61 @@ def build_error(string):
     return html.format(string)
 
 
+def folder_contents_html(files, folders):
+    """Given files and folders generate html."""
+    html = """
+    <!DOCTYPE html>
+    <html>
+        <body>
+            {}
+        </body>
+    </html>
+    """
+    files_and_folders = ''
+    for folder in folders:
+        files_and_folders += '<h4>' + folder + '</h4>'
+    for file in files:
+        files_and_folders += '<h4>' + file + '</h4>'
+    return html.format(files_and_folders)
+
+
+def get_path(path):
+    """Search for file or directory and returns path."""
+    for root, dirs, files in os.walk(os.path.abspath('webroot')):
+        for directory in dirs:
+            if directory == path:
+                return os.path.join(root, directory)
+        for file in files:
+            if file == path:
+                return os.path.join(root, file)
+
+
 def resolve_uri(uri):
     """Take a URI parsed from a request.
 
     It will return a body for a response with the type of
     content contained in the body.
     """
-    pass
+    path = get_path(uri.split('/')[-1]) if uri != '/' else 'webroot'
+    if path and os.path.isfile(path):
+        with open(path, mode='rb') as file:
+            file_content = file.read()
+            mime = MimeTypes()
+            content_type = mime.guess_type(path)[0]
+            print(len(file_content))
+            return file_content, str(content_type).encode()
+    elif path and os.path.isdir(path):
+        contents = os.listdir(path)
+        files = []
+        folders = []
+        for x in contents:
+            if os.path.isfile(os.path.abspath(x)):
+                files.append(x)
+            else:
+                folders.append(x)
+        return str(folder_contents_html(files, folders)).encode(), b'text/html'
+    else:
+        raise ValueError(404)
 
 
 def handle_message(conn, buffer_length):
@@ -98,8 +151,8 @@ def handle_message(conn, buffer_length):
     full_message = b''.join(message)
     try:
         uri = parse_request(full_message.decode('utf8'))
-        file_type, body = resolve_uri(uri.decode("utf8"))
-        return response_ok().encode('utf8')
+        body, content_type = resolve_uri(uri)
+        return response_ok(body, content_type)
     except ValueError as e:
         return response_error(*e.args).encode('utf8')
 
