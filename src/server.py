@@ -6,6 +6,11 @@ import datetime
 import os
 from mimetypes import MimeTypes
 
+walk_dir = os.getcwd()
+if walk_dir.split('/')[-1] != 'src':  # code to make tox work
+    walk_dir += '/src'
+walk_dir += '/webroot'
+
 
 buffer_length = 1024
 address = ('127.0.0.1', 5000)
@@ -40,15 +45,12 @@ def response_error(err_code):
 def parse_request(message):  # pragma: no cover
     """Validate that the request is well-formed if it is return the URI from the request."""
     request_split = message.split()
-    if len(request_split) > 5:
-        raise ValueError(400)
-    elif request_split[0] != b'GET':
+    if request_split[0] != b'GET':
         raise ValueError(405)
     elif b'HTTP/' not in request_split[2]:
         raise ValueError(400)
     elif b'1.1' not in request_split[2]:
         raise ValueError(505)
-
     return request_split[1]
 
 
@@ -66,10 +68,6 @@ def folder_contents_html(folder_path, files, folders):
 
 def get_path(path):
     """Search for file or directory and returns path."""
-    walk_dir = os.getcwd()
-    if walk_dir.split()[-1] != 'src':  # code to make tox work
-        walk_dir += '/src'
-    walk_dir += '/webroot'
     for root, dirs, files in os.walk(walk_dir):
         for directory in dirs:
             if directory == path:
@@ -85,7 +83,8 @@ def resolve_uri(uri):
     It will return a body for a response with the type of
     content contained in the body.
     """
-    path = get_path(uri.split('/')[-1]) if uri != '/' else 'webroot'
+    path = get_path(uri.split('/')[-1]) if uri != '/' else walk_dir
+    # import pdb; pdb.set_trace()
     if path and os.path.isfile(path):
         with open(path, mode='rb') as file:
             file_content = file.read()

@@ -110,6 +110,25 @@ def test_resolve_uri_find_type(file_path, file_type):
     assert resolve_uri(file_path)[1] == file_type
 
 
+def test_resolve_uri_folder():
+    """Test resolve_uri with folder path."""
+    from server import resolve_uri
+    web_root_content = [
+        b'images',
+        b'make_time.py',
+        b'._sample.txt',
+        b'._images',
+        b'a_web_page.html',
+        b'._a_web_page.html',
+        b'._make_time.py',
+        b'sample.txt'
+    ]
+    html = resolve_uri('/')
+    assert html[1] == b'text/html'
+    for content in web_root_content:
+        assert content in html[0]
+
+
 @pytest.mark.parametrize("req,resp", BAD_REQUESTS)
 def test_bad_request_errors(req, resp):
     """Test specific request errors."""
