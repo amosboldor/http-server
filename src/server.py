@@ -33,7 +33,7 @@ def response_ok(body, content_type):
 def response_error(err_code):
     """Return a well formed Error response."""
     response = 'HTTP/1.1 {0} {1}\r\n'
-    response += 'Content-Type: text/plain\r\n'
+    # response += 'Content-Type: text/plain\r\n'
     response += 'Date: ' + datetime.datetime.now().strftime('%a %b %Y %X PST') + '\r\n'
     return ''.join(response).format(err_code, responses[err_code][0])
 
@@ -48,48 +48,27 @@ def parse_request(message):
     request_split = message.split()
     try:
         if len(request_split) > 5:
-            raise ValueError(405)
+            raise ValueError(400)
         elif request_split[0] != 'GET':
             raise ValueError(405)
         elif 'HTTP/' not in request_split[2]:
             raise ValueError(400)
         elif '1.1' not in request_split[2]:
             raise ValueError(505)
-        if request_split[3] != 'Host:' or request_split[4] != address[0]:
-            raise ValueError(400)
     except ValueError:
         pass
     return request_split[1]
 
 
-def build_error(string):
-    """Build html error message."""
-    html = """
-    <!DOCTYPE html>
-    <html>
-        <body>
-            <h1>{}</h1>
-        </body>
-    </html>
-    """
-    return html.format(string)
-
-
-def folder_contents_html(files, folders):
+def folder_contents_html(folder_path, files, folders):
     """Given files and folders generate html."""
-    html = """
-    <!DOCTYPE html>
-    <html>
-        <body>
-            {}
-        </body>
-    </html>
-    """
+    html = "<!DOCTYPE html><html><body>{}</body></html>"
+    atag = '<a href="{}">{}</a>'
     files_and_folders = ''
     for folder in folders:
-        files_and_folders += '<h4>' + folder + '</h4>'
+        files_and_folders += '<h4>' + atag.format(folder_path + '/' + folder, folder) + '</h4>'
     for file in files:
-        files_and_folders += '<h4>' + file + '</h4>'
+        files_and_folders += '<h4>' + atag.format(folder_path + '/' + file, file) + '</h4>'
     return html.format(files_and_folders)
 
 
@@ -116,18 +95,18 @@ def resolve_uri(uri):
             file_content = file.read()
             mime = MimeTypes()
             content_type = mime.guess_type(path)[0]
-            print(len(file_content))
             return file_content, str(content_type).encode()
     elif path and os.path.isdir(path):
         contents = os.listdir(path)
         files = []
         folders = []
+        folder_path = path.split('webroot')[-1]
         for x in contents:
             if os.path.isfile(os.path.abspath(x)):
                 files.append(x)
             else:
                 folders.append(x)
-        return str(folder_contents_html(files, folders)).encode(), b'text/html'
+        return str(folder_contents_html(folder_path, files, folders)).encode(), b'text/html'
     else:
         raise ValueError(404)
 
@@ -139,10 +118,8 @@ def handle_message(conn, buffer_length):
     while True:
         part = conn.recv(buffer_length)
         message.append(part)
-        print('Receiving message from client...')
-        print('consuming: ', len(part))
+        print('Receiving message from client...\n')
         if len(part) < buffer_length or part[-2:] == b'\r\n':
-            print('setting message to complete: ')
             break
         else:
             print('Hold on, there is more...Receiving...')
@@ -177,7 +154,7 @@ def server():
     while True:
         try:
             conn, addr = server.accept()
-            print('Received a connection by: ', addr)
+            print('Received a connection from: ', addr)
             message = handle_message(conn, buffer_length)
         except KeyboardInterrupt:
             print('\n\nShutting Down Server...')
@@ -188,13 +165,12 @@ def server():
             server.close()
             exit()
         print('Sending response... ')
-
         try:
             conn.sendall(message)
-            print(message)
+            print('\nResponse Sent!\n')
         except socket.error as se:
             print('Something went wrong when attempting to send to client:', se)
-        print('Closing connection for: ', addr)
+        print('Closing connection from: ', addr)
         print('Still listening...(Control + C to stop server)')
         conn.close()
     print('end: ', message)
