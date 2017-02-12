@@ -24,11 +24,7 @@ def client(message):
     print('sending the following message:',
           message, 'to server at: ',
           socket.gethostbyname('127.0.0.1'))
-    if sys.version[0] == '3':
-        client.sendall(message.encode('utf8') + b'\r\n')
-    else:
-        client.sendall(message + b'\r\n')
-
+    client.sendall(str(message).encode() + b'\r\n')
     server_message = []
     while True:
         part = client.recv(buffer_length)

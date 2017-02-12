@@ -33,30 +33,22 @@ def response_ok(body, content_type):
 def response_error(err_code):
     """Return a well formed Error response."""
     response = 'HTTP/1.1 {0} {1}\r\n'
-    # response += 'Content-Type: text/plain\r\n'
     response += 'Date: ' + datetime.datetime.now().strftime('%a %b %Y %X PST') + '\r\n'
     return ''.join(response).format(err_code, responses[err_code][0])
-
-
-def main():
-    """Call server."""
-    server()
 
 
 def parse_request(message):
     """Validate that the request is well-formed if it is return the URI from the request."""
     request_split = message.split()
-    try:
-        if len(request_split) > 5:
-            raise ValueError(400)
-        elif request_split[0] != 'GET':
-            raise ValueError(405)
-        elif 'HTTP/' not in request_split[2]:
-            raise ValueError(400)
-        elif '1.1' not in request_split[2]:
-            raise ValueError(505)
-    except ValueError:
-        pass
+    if len(request_split) > 5:
+        raise ValueError(400)
+    elif request_split[0] != 'GET':
+        raise ValueError(405)
+    elif 'HTTP/' not in request_split[2]:
+        raise ValueError(400)
+    elif '1.1' not in request_split[2]:
+        raise ValueError(505)
+
     return request_split[1]
 
 
@@ -176,4 +168,4 @@ def server():
     print('end: ', message)
 
 if __name__ == '__main__':
-    main()
+    server()
