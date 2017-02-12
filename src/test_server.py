@@ -77,8 +77,8 @@ def test_response_ok_content_length():
 def test_parse_request_ok():
     """Test parse_request with valid request."""
     from server import parse_request
-    req = b"GET www.bobdole.com HTTP/1.1\r\nHost: hell\r\n\r\n"
-    assert parse_request(req) == b'www.bobdole.com'
+    req = "GET www.bobdole.com HTTP/1.1\r\nHost: hell\r\n\r\n"
+    assert parse_request(req) == 'www.bobdole.com'
 
 
 @pytest.mark.parametrize("request", REQUESTS_VALUE_ERROR)

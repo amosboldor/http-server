@@ -45,11 +45,12 @@ def response_error(err_code):
 def parse_request(message):  # pragma: no cover
     """Validate that the request is well-formed if it is return the URI from the request."""
     request_split = message.split()
-    if request_split[0] != b'GET':
+    # import pdb; pdb.set_trace()
+    if request_split[0] != 'GET':
         raise ValueError(405)
-    elif b'HTTP/' not in request_split[2]:
+    elif 'HTTP/' not in request_split[2]:
         raise ValueError(400)
-    elif b'1.1' not in request_split[2]:
+    elif '1.1' not in request_split[2]:
         raise ValueError(505)
     return request_split[1]
 
