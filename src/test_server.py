@@ -1,5 +1,11 @@
 """Tests for server.py."""
 import pytest
+import os
+
+walk_dir = os.getcwd()
+if walk_dir.split()[-1] != 'src':  # code to make tox work
+    walk_dir += '/src'
+walk_dir += '/webroot'
 
 
 BAD_REQUESTS = [
@@ -28,6 +34,15 @@ TYPES = [
     ["/a_web_page.html", b"text/html"]
 ]
 
+FILES_AND_FOLDERS = [
+    ["Sample_Scene_Balls.jpg", "/images/Sample_Scene_Balls.jpg"],
+    ["sample_1.png", "/images/sample_1.png"],
+    ["sample.txt", '/sample.txt'],
+    ["make_time.py", '/make_time.py'],
+    ["a_web_page.html", '/a_web_page.html'],
+    ["images", '/images']
+]
+
 ERRORS = [
     [404, "404 Not Found"],
     [405, "405 Method Not Allowed"],
@@ -35,6 +50,21 @@ ERRORS = [
     [505, "505 HTTP Version Not Supported"],
     [500, "500 Internal Server Error"]
 ]
+
+
+def test_folder_contents_html():
+    """Test the generating html function with proper a tags."""
+    from server import folder_contents_html
+    html = folder_contents_html('/bobdole', ['slim.py'], ['pics'])
+    assert '/bobdole/slim.py' in html
+    assert '/bobdole/pics' in html
+
+
+@pytest.mark.parametrize("file_name, file_path", FILES_AND_FOLDERS)
+def test_get_path(file_name, file_path):
+    """Test that get_path gets and returns file content and type."""
+    from server import get_path
+    assert get_path(file_name) == walk_dir + file_path
 
 
 def test_response_ok_content_length():

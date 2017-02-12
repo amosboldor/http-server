@@ -37,7 +37,7 @@ def response_error(err_code):
     return ''.join(response).format(err_code, responses[err_code][0])
 
 
-def parse_request(message):
+def parse_request(message):  # pragma: no cover
     """Validate that the request is well-formed if it is return the URI from the request."""
     request_split = message.split()
     if len(request_split) > 5:
@@ -66,7 +66,11 @@ def folder_contents_html(folder_path, files, folders):
 
 def get_path(path):
     """Search for file or directory and returns path."""
-    for root, dirs, files in os.walk(os.path.abspath('webroot')):
+    walk_dir = os.getcwd()
+    if walk_dir.split()[-1] != 'src':  # code to make tox work
+        walk_dir += '/src'
+    walk_dir += '/webroot'
+    for root, dirs, files in os.walk(walk_dir):
         for directory in dirs:
             if directory == path:
                 return os.path.join(root, directory)
