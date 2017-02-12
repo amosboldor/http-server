@@ -21,11 +21,11 @@ REQUESTS_VALUE_ERROR = [
 ]
 
 TYPES = [
-    ["/images/Sample_Scene_Balls.jpg", "image/jpeg"],
-    ["/images/sample_1.png", "image/png"],
-    ["/sample.txt", "text/plain"],
-    ["/make_time.py", "text/x-python"],
-    ["/a_web_page.html", "text/html"]
+    ["/images/Sample_Scene_Balls.jpg", b"image/jpeg"],
+    ["/images/sample_1.png", b"image/png"],
+    ["/sample.txt", b"text/plain"],
+    ["/make_time.py", b"text/x-python"],
+    ["/a_web_page.html", b"text/html"]
 ]
 
 ERRORS = [
@@ -40,8 +40,8 @@ ERRORS = [
 def test_response_ok_content_length():
     """Test content-length header."""
     from server import response_ok
-    headers = response_ok("bob dole", 'text/plain').split(b'\r\n\r\n')[0]
-    assert headers.split(b'\r\n')[4] == 'Content-Length: 8'
+    headers = response_ok(b"bob dole", b'text/plain').split(b'\r\n\r\n')[0]
+    assert headers.split(b'\r\n')[4] == b'Content-Length: 8'
 
 
 def test_parse_request_ok():
