@@ -7,6 +7,9 @@ setup(
     name="http-server",
     description="Implementations of a simple http server.",
     version=0.2,
+    install_requires=[
+        "gevent"
+    ],
     author="Amos Boldor",
     author_email='amosboldor@gmail.com',
     license="MIT",
