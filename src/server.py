@@ -119,15 +119,18 @@ def handle_message(conn, buffer_length):
             break
         else:
             print('Hold on, there is more...Receiving...')
-    print('parsing request...')
+    print('parsing request...\n')
 
     full_message = b''.join(message)
     try:
         uri = parse_request(full_message.decode('utf8'))
         body, content_type = resolve_uri(uri)
-        return response_ok(body, content_type)
+        message = response_ok(body, content_type)
     except ValueError as e:
-        return response_error(*e.args).encode('utf8')
+        message = response_error(*e.args).encode('utf8')
+    print('Sending Response...\n')
+    conn.sendall(message)
+    conn.close()
 
 
 def initialize_connection():
@@ -136,10 +139,9 @@ def initialize_connection():
                            socket.SOCK_STREAM,
                            socket.IPPROTO_TCP)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    print('entering server')
     server.bind(address)
     server.listen(1)
-    print('listening on: ', address)
+    print('\n', 'Server running on http://127.0.0.1:{}/'.format(address[1]), '\n')
     return server
 
 
@@ -151,25 +153,16 @@ def server():
         try:
             conn, addr = server.accept()
             print('Received a connection from: ', addr)
-            message = handle_message(conn, buffer_length)
+            handle_message(conn, buffer_length)
         except KeyboardInterrupt:
             print('\n\nShutting Down Server...')
-            try:
-                conn.close()
-            except UnboundLocalError:
-                pass
             server.close()
             exit()
-        print('Sending response... ')
-        try:
-            conn.sendall(message)
-            print('\nResponse Sent!\n')
         except socket.error as se:
             print('Something went wrong when attempting to send to client:', se)
         print('Closing connection from: ', addr)
         print('Still listening...(Control + C to stop server)')
-        conn.close()
-    print('end: ', message)
+
 
 if __name__ == '__main__':
     server()
