@@ -45,7 +45,6 @@ def response_error(err_code):
 def parse_request(message):  # pragma: no cover
     """Validate that the request is well-formed if it is return the URI from the request."""
     request_split = message.split()
-    # import pdb; pdb.set_trace()
     if request_split[0] != 'GET':
         raise ValueError(405)
     elif 'HTTP/' not in request_split[2]:
@@ -85,7 +84,6 @@ def resolve_uri(uri):
     content contained in the body.
     """
     path = get_path(uri.split('/')[-1]) if uri != '/' else walk_dir
-    # import pdb; pdb.set_trace()
     if path and os.path.isfile(path):
         with open(path, mode='rb') as file:
             file_content = file.read()
@@ -128,6 +126,8 @@ def handle_message(conn, buffer_length):
         message = response_ok(body, content_type)
     except ValueError as e:
         message = response_error(*e.args).encode('utf8')
+    except IndexError:
+        message = response_error(400).encode('utf8')
     print('Sending Response...\n')
     conn.sendall(message)
     conn.close()
