@@ -86,6 +86,3 @@ TOTAL                  193     53    73%
 
 ================================ 35 passed in 0.14 seconds ==================================
 ```
-
-## Authors:
-Ford Fowler and Maelle Vance
